@@ -129,6 +129,18 @@
             display: none; 
         }
 
+        /* Rename Panel */
+        .rename-panel {
+            background: #fdfefe;
+            border: 1px solid #d4e6f1;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
         /* PRINT MAGIC */
         @media print {
             .no-print, .internal-only, button {
@@ -159,7 +171,6 @@
             }
             textarea:placeholder-shown { display: none !important; }
 
-            /* Hide the global notes container completely if the textarea is empty */
             .global-notes-container:has(#global-client-notes:placeholder-shown) {
                 display: none !important;
             }
@@ -173,7 +184,7 @@
 <body>
 
     <div class="no-print" style="background:#e8f4f8; padding:15px; border-radius:5px; margin-bottom:20px;">
-        <strong>Instructions:</strong> Use the <strong>☰</strong> to drag phases. Assign each phase to the Base Quote or an Option to automatically build comparisons. Add general terms at the bottom.
+        <strong>Instructions:</strong> Rename your options below (e.g., "3 Bathrooms"). Use the <strong>☰</strong> to drag phases around. Assign each phase to build comparisons. 
     </div>
 
     <h1>The Luxe Tile Co - Project Quote</h1>
@@ -201,19 +212,36 @@
         </div>
     </div>
 
-    <div id="phases-container">
+    <div class="rename-panel no-print">
+        <strong style="color: var(--brand);">Customise Option Names:</strong>
+        <div>
+            <label style="font-size: 0.8em; color: #666;">Name Option 1</label><br>
+            <input type="text" id="name-opt1" value="Option 1" oninput="updateNames()" style="width: 150px; background: #fff;">
         </div>
+        <div>
+            <label style="font-size: 0.8em; color: #666;">Name Option 2</label><br>
+            <input type="text" id="name-opt2" value="Option 2" oninput="updateNames()" style="width: 150px; background: #fff;">
+        </div>
+    </div>
 
-    <button class="btn no-print" onclick="addPhase('base')">+ Add Base Phase</button>
-    <button class="btn btn-alt no-print" onclick="addPhase('opt1')">+ Add Option 1 Phase</button>
-    <button class="btn btn-alt no-print" onclick="addPhase('opt2')" style="background-color: #2980b9;">+ Add Option 2 Phase</button>
+    <div id="phases-container">
+        <!-- Phases will drop in here -->
+    </div>
 
+    <div style="margin-bottom: 20px;">
+        <button class="btn no-print" onclick="addPhase('base')">+ Add Base Phase</button>
+        <button id="btn-add-opt1" class="btn btn-alt no-print" onclick="addPhase('opt1')">+ Add Option 1 Phase</button>
+        <button id="btn-add-opt2" class="btn btn-alt no-print" onclick="addPhase('opt2')" style="background-color: #2980b9;">+ Add Option 2 Phase</button>
+    </div>
+
+    <!-- Global Client Notes Section -->
     <div class="global-notes-container">
         <input type="text" value="Client Notes & Terms" style="font-size: 1.4em; font-weight: bold; color: var(--brand); border: none; background: transparent; padding: 0; width: 100%; margin-bottom: 10px;">
         <textarea id="global-client-notes" rows="4" style="width: 100%; box-sizing: border-box; padding: 10px;" placeholder="Add general terms, payment schedules, or validity periods here. If left blank, this whole section vanishes on the PDF..."></textarea>
     </div>
 
     <div class="compare-grid">
+        <!-- Base Quote Box -->
         <div class="quote-box" id="quote-base">
             <h3 style="margin-top:0;">Base Quote</h3>
             <p>Subtotal: £<span id="sub-base">0.00</span></p>
@@ -225,9 +253,10 @@
             </div>
         </div>
 
+        <!-- Option 1 Box -->
         <div class="quote-box option-box" id="quote-opt1">
-            <h3 style="margin-top:0; color:#2980b9;">With Option 1</h3>
-            <p style="font-size: 0.8em; color: #555;">(Base Scope + Option 1)</p>
+            <h3 id="quote-opt1-title" style="margin-top:0; color:#2980b9;">With Option 1</h3>
+            <p id="quote-opt1-sub" style="font-size: 0.8em; color: #555;">(Base Scope + Option 1)</p>
             <p>Subtotal: £<span id="sub-opt1">0.00</span></p>
             <p>VAT (20%): £<span id="vat-opt1">0.00</span></p>
             <h2 style="margin: 5px 0;">Total: £<span id="tot-opt1">0.00</span></h2>
@@ -237,9 +266,10 @@
             </div>
         </div>
 
+        <!-- Option 2 Box -->
         <div class="quote-box option-box" id="quote-opt2">
-            <h3 style="margin-top:0; color:#2980b9;">With Option 2</h3>
-            <p style="font-size: 0.8em; color: #555;">(Base Scope + Option 2)</p>
+            <h3 id="quote-opt2-title" style="margin-top:0; color:#2980b9;">With Option 2</h3>
+            <p id="quote-opt2-sub" style="font-size: 0.8em; color: #555;">(Base Scope + Option 2)</p>
             <p>Subtotal: £<span id="sub-opt2">0.00</span></p>
             <p>VAT (20%): £<span id="vat-opt2">0.00</span></p>
             <h2 style="margin: 5px 0;">Total: £<span id="tot-opt2">0.00</span></h2>
@@ -254,6 +284,26 @@
 
     <script>
         let phaseCount = 0;
+
+        function updateNames() {
+            let n1 = document.getElementById('name-opt1').value || 'Option 1';
+            let n2 = document.getElementById('name-opt2').value || 'Option 2';
+
+            // Update buttons
+            document.getElementById('btn-add-opt1').innerText = '+ Add ' + n1 + ' Phase';
+            document.getElementById('btn-add-opt2').innerText = '+ Add ' + n2 + ' Phase';
+
+            // Update dropdown menus inside all phases
+            document.querySelectorAll('.opt1-dropdown-text').forEach(el => el.innerText = 'Assign to: ' + n1);
+            document.querySelectorAll('.opt2-dropdown-text').forEach(el => el.innerText = 'Assign to: ' + n2);
+
+            // Update bottom comparison boxes
+            document.getElementById('quote-opt1-title').innerText = 'With ' + n1;
+            document.getElementById('quote-opt1-sub').innerText = '(Base Scope + ' + n1 + ')';
+            
+            document.getElementById('quote-opt2-title').innerText = 'With ' + n2;
+            document.getElementById('quote-opt2-sub').innerText = '(Base Scope + ' + n2 + ')';
+        }
 
         // Setup drag and drop
         const container = document.getElementById('phases-container');
@@ -292,7 +342,10 @@
             phaseDiv.addEventListener('dragstart', () => phaseDiv.classList.add('dragging'));
             phaseDiv.addEventListener('dragend', () => phaseDiv.classList.remove('dragging'));
             
-            let titlePrefix = defaultAssign === 'base' ? 'Phase' : (defaultAssign === 'opt1' ? 'Option 1' : 'Option 2');
+            let n1 = document.getElementById('name-opt1').value || 'Option 1';
+            let n2 = document.getElementById('name-opt2').value || 'Option 2';
+            
+            let titlePrefix = defaultAssign === 'base' ? 'Phase' : (defaultAssign === 'opt1' ? n1 : n2);
 
             phaseDiv.innerHTML = `
                 <div style="display: flex; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #ccc; padding-bottom: 5px;">
@@ -301,8 +354,8 @@
                     
                     <select class="phase-assignment no-print" onchange="calculate()" style="margin-left: 15px; background: #eee; font-weight:bold;">
                         <option value="base" ${defaultAssign === 'base' ? 'selected' : ''}>Base Quote</option>
-                        <option value="opt1" ${defaultAssign === 'opt1' ? 'selected' : ''}>Assign to Option 1</option>
-                        <option value="opt2" ${defaultAssign === 'opt2' ? 'selected' : ''}>Assign to Option 2</option>
+                        <option value="opt1" class="opt1-dropdown-text" ${defaultAssign === 'opt1' ? 'selected' : ''}>Assign to: ${n1}</option>
+                        <option value="opt2" class="opt2-dropdown-text" ${defaultAssign === 'opt2' ? 'selected' : ''}>Assign to: ${n2}</option>
                     </select>
                 </div>
                 
@@ -426,6 +479,7 @@
         }
 
         window.onload = () => {
+            updateNames();
             addPhase('base');
         };
     </script>

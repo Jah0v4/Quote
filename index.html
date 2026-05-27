@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Luxe Tile Co - Quote Builder</title>
+    <style>
+        :root {
+            --brand: #2c3e50;
+            --internal: #ffebee;
+            --internal-border: #ef5350;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            color: #333;
+        }
+        h1, h2, h3 { color: var(--brand); }
+        .header-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 10px;
+        }
+        input, textarea {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: inherit;
+        }
+        
+        /* Internal View Styling */
+        .internal-only {
+            background-color: var(--internal);
+            border-left: 4px solid var(--internal-border);
+            padding: 10px;
+            margin-bottom: 15px;
+        }
+        .internal-badge {
+            font-size: 0.8em;
+            color: var(--internal-border);
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        /* Phase Styling */
+        .phase-block {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        .row-grid {
+            display: grid;
+            grid-template-columns: 3fr 1fr 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+
+        .btn {
+            background-color: var(--brand);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        .btn-alt { background-color: #27ae60; }
+        .btn-print { background-color: #e74c3c; font-size: 1.1em; width: 100%; margin-top: 30px;}
+
+        /* Totals */
+        .totals-box {
+            text-align: right;
+            font-size: 1.2em;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid var(--brand);
+        }
+
+        /* PRINT MAGiC - This hides internal stuff from the PDF */
+        @media print {
+            .no-print, .internal-only, button {
+                display: none !important;
+            }
+            input, textarea {
+                border: none;
+                background: transparent;
+                resize: none;
+                padding: 0;
+            }
+            .row-grid { grid-template-columns: 4fr 1fr; } /* Hide internal columns */
+            .hide-print { display: none !important; }
+            body { padding: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="no-print" style="background:#e8f4f8; padding:15px; border-radius:5px; margin-bottom:20px;">
+        <strong>Instructions:</strong> Fill out the details below. Internal costs and margins are highlighted in red. When you click "Export PDF", the red boxes, buttons, and your internal margins will magically disappear.
+    </div>
+
+    <h1>The Luxe Tile Co - Project Quote</h1>
+
+    <div class="header-grid">
+        <div>
+            <div class="input-group">
+                <label>Job Title</label>
+                <input type="text" placeholder="e.g., Office Renovation">
+            </div>
+            <div class="input-group">
+                <label>Client Name</label>
+                <input type="text" placeholder="Main Contact">
+            </div>
+        </div>
+        <div>
+            <div class="input-group">
+                <label>Site Address</label>
+                <textarea rows="3" placeholder="Full Address"></textarea>
+            </div>
+            <div class="input-group">
+                <label>Brief Scope of Works</label>
+                <textarea rows="3" placeholder="Summarise the project..."></textarea>
+            </div>
+        </div>
+    </div>
+
+    <div id="phases-container">
+        </div>
+
+    <button class="btn no-print" onclick="addPhase('Standard Phase')">+ Add Standard Phase</button>
+    <button class="btn btn-alt no-print" onclick="addPhase('Alternative Option')">+ Add Alternative Option (e.g., Option B)</button>
+
+    <div class="totals-box">
+        <p>Subtotal (Ex. VAT): £<span id="subtotal">0.00</span></p>
+        <p>VAT (20%): £<span id="vat">0.00</span></p>
+        <h2 style="margin: 5px 0;">Total (Inc. VAT): £<span id="total">0.00</span></h2>
+        
+        <div class="internal-only no-print" style="text-align: right; margin-top: 15px;">
+            <span class="internal-badge">Internal Profit Margin</span>
+            <h3 style="margin: 5px 0; color: #d32f2f;">Est. Profit: £<span id="profit">0.00</span></h3>
+        </div>
+    </div>
+
+    <button class="btn btn-print no-print" onclick="window.print()">Export to PDF</button>
+
+    <script>
+        let phaseCount = 0;
+
+        function addPhase(type) {
+            phaseCount++;
+            const container = document.getElementById('phases-container');
+            const phaseDiv = document.createElement('div');
+            phaseDiv.className = 'phase-block';
+            
+            let titlePrefix = type === 'Alternative Option' ? 'Option' : 'Phase';
+
+            phaseDiv.innerHTML = `
+                <input type="text" value="${titlePrefix} ${phaseCount}: [Click to Edit Title]" style="font-size: 1.2em; font-weight: bold; width: 100%; margin-bottom: 15px; border:none; border-bottom: 1px solid #ccc;">
+                
+                <div class="row-grid no-print" style="font-weight:bold; font-size: 0.9em; border-bottom: 2px solid #eee;">
+                    <div>Description</div>
+                    <div class="internal-only" style="margin:0; padding:5px;">Internal Cost (£)</div>
+                    <div class="internal-only" style="margin:0; padding:5px;">Margin (%)</div>
+                    <div>Client Price (£)</div>
+                </div>
+
+                <div id="rows-phase-${phaseCount}">
+                    </div>
+                <button class="btn no-print" style="background:#7f8c8d; font-size:0.8em;" onclick="addRow(${phaseCount})">+ Add Item Row</button>
+            `;
+            container.appendChild(phaseDiv);
+            addRow(phaseCount); // Add one empty row to start
+        }
+
+        function addRow(phaseId) {
+            const rowContainer = document.getElementById(`rows-phase-${phaseId}`);
+            const rowDiv = document.createElement('div');
+            rowDiv.className = 'row-grid';
+            
+            rowDiv.innerHTML = `
+                <input type="text" placeholder="e.g., Rip out & waste removal">
+                <input type="number" class="internal-cost hide-print" placeholder="Cost" oninput="calculate()">
+                <input type="number" class="margin-perc hide-print" value="20" placeholder="%" oninput="calculate()">
+                <input type="number" class="client-price" placeholder="Final Price" readonly style="font-weight:bold;">
+            `;
+            rowContainer.appendChild(rowDiv);
+        }
+
+        function calculate() {
+            let totalCost = 0;
+            let totalPrice = 0;
+
+            const rows = document.querySelectorAll('.row-grid');
+            rows.forEach(row => {
+                const costInput = row.querySelector('.internal-cost');
+                const marginInput = row.querySelector('.margin-perc');
+                const priceInput = row.querySelector('.client-price');
+
+                if(costInput && marginInput && priceInput) {
+                    let cost = parseFloat(costInput.value) || 0;
+                    let margin = parseFloat(marginInput.value) || 0;
+                    
+                    // Calculate price based on desired margin percentage
+                    let multiplier = 1 + (margin / 100);
+                    let price = cost * multiplier;
+                    
+                    priceInput.value = price.toFixed(2);
+                    totalCost += cost;
+                    totalPrice += price;
+                }
+            });
+
+            const subtotal = totalPrice;
+            const vat = subtotal * 0.20;
+            const total = subtotal + vat;
+            const profit = subtotal - totalCost;
+
+            document.getElementById('subtotal').innerText = subtotal.toFixed(2);
+            document.getElementById('vat').innerText = vat.toFixed(2);
+            document.getElementById('total').innerText = total.toFixed(2);
+            document.getElementById('profit').innerText = profit.toFixed(2);
+        }
+
+        // Add a default phase on load
+        addPhase('Standard Phase');
+    </script>
+</body>
+</html>
